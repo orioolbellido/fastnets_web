@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Pro de SPL - Bidireccional</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 30px;
+        }
+
+        h1 {
+            grid-column: span 2;
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+
+        .author-credits {
+            grid-column: span 2;
+            text-align: center;
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2980b9;
+            margin-top: 15px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+
+        .target-section {
+            background-color: #e8f6f3;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #1abc9c;
+            margin-top: 15px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: flex-end;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            width: 90%;
+            background-color: white;
+        }
+
+        select {
+            width: 95%;
+            cursor: pointer;
+        }
+
+        .results {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .result-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .spl-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .val-tops {
+            color: #3498db;
+        }
+
+        .val-subs {
+            color: #e74c3c;
+        }
+
+        .val-target {
+            color: #1abc9c;
+            font-size: 1.4em;
+        }
+
+        .canvas-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        canvas {
+            border: 2px solid #bdc3c7;
+            border-radius: 5px;
+            background-color: #ecf0f1;
+            max-width: 100%;
+            margin-top: 10px;
+        }
+
+        .formulas-box {
+            grid-column: span 2;
+            background: #f8f9fa;
+            border-left: 5px solid #34495e;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #444;
+            border-radius: 4px;
+        }
+
+        .formula-title {
+            font-weight: bold;
+            font-family: 'Segoe UI', sans-serif;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            h1,
+            .author-credits,
+            .formulas-box {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Calculadora Acústica Avanzada</h1>
+
+        <div class="author-credits">
+            Hecha por Oriol Bellido con Gemini 3.1 Pro (Calculadora propia)
+        </div>
+
+        <div class="controls">
+            <div class="section-title">1. Dimensiones de la Sala</div>
+            <div class="row">
+                <div class="control-group">
+                    <label>Largo (Metros):</label>
+                    <input type="number" id="roomLength" value="20" min="1" oninput="calculateAll()">
+                </div>
+                <div class="control-group">
+                    <label>Ancho (Metros):</label>
+                    <input type="number" id="roomWidth" value="10" min="1" oninput="calculateAll()">
+                </div>
+            </div>
+
+            <div class="target-section">
+                <div style="font-weight: bold; color: #16a085; margin-bottom: 5px;">2. Objetivo Automático (Cálculo
+                    Inverso)</div>
+                <div class="row">
+                    <div class="control-group">
+                        <label>SPL deseado al fondo (dB):</label>
+                        <input type="number" id="targetSPL" value="100" oninput="calculateAll()">
+                    </div>
+                    <div class="control-group" style="justify-content: center;">
+                        <label>Tu sistema NECESITA a 1 metro:</label>
+                        <div class="val-target" id="reqSPL1m">-- dB</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">3. Woofers / Medios-Agudos</div>
+            <div class="row">
+                <div class="control-group" style="flex: 1.5;">
+                    <label>Modelo (Opcional):</label>
+                    <input type="text" placeholder="Ej. El de Thomann">
+                </div>
+                <div class="control-group">
+                    <label>Cantidad:</label>
+                    <input type="number" id="wCount" value="2" min="0" oninput="calculateAll()">
+                </div>
+            </div>
+            <div class="row">
+                <div class="control-group" style="flex: 2;">
+                    <label>Dato disponible:</label>
+                    <select id="wMode" onchange="toggleMode('w'); calculateAll()">
+                        <option value="maxspl">Max SPL (Ficha técnica)</option>
+                        <option value="sens">Sensibilidad + Potencia</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row" id="wSensInputs" style="display:none;">
+                <div class="control-group">
+                    <label>Sensibilidad (1W/1m):</label>
+                    <input type="number" id="wSens" value="99" oninput="calculateAll()">
+                </div>
+                <div class="control-group">
+                    <label>Potencia RMS (W):</label>
+                    <input type="number" id="wPower" value="800" oninput="calculateAll()">
+                </div>
+            </div>
+            <div class="row" id="wMaxSplInputs">
+                <div class="control-group">
+                    <label>SPL Máximo por altavoz (dB):</label>
+                    <input type="number" id="wMaxSPL" value="122" oninput="calculateAll()">
+                </div>
+            </div>
+
+
+            <div class="section-title">4. Subwoofers</div>
+            <div class="row">
+                <div class="control-group" style="flex: 1.5;">
+                    <label>Modelo (Opcional):</label>
+                    <input type="text" placeholder="Ej. Meyer 900-LFC">
+                </div>
+                <div class="control-group">
+                    <label>Cantidad:</label>
+                    <input type="number" id="swCount" value="1" min="0" oninput="calculateAll()">
+                </div>
+            </div>
+            <div class="row">
+                <div class="control-group" style="flex: 2;">
+                    <label>Dato disponible:</label>
+                    <select id="swMode" onchange="toggleMode('sw'); calculateAll()">
+                        <option value="sens">Sensibilidad + Potencia</option>
+                        <option value="maxspl">Max SPL (Ficha técnica)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row" id="swSensInputs">
+                <div class="control-group">
+                    <label>Sensibilidad (1W/1m):</label>
+                    <input type="number" id="swSens" value="96" oninput="calculateAll()">
+                </div>
+                <div class="control-group">
+                    <label>Potencia RMS (W):</label>
+                    <input type="number" id="swPower" value="1500" oninput="calculateAll()">
+                </div>
+            </div>
+            <div class="row" id="swMaxSplInputs" style="display:none;">
+                <div class="control-group">
+                    <label>SPL Máximo por altavoz (dB):</label>
+                    <input type="number" id="swMaxSPL" value="130" oninput="calculateAll()">
+                </div>
+            </div>
+
+
+            <div class="results">
+                <div class="result-box">
+                    <div style="font-size: 0.8em; text-transform: uppercase;">Woofers al fondo</div>
+                    <div class="spl-value val-tops" id="splWoofers">-- dB</div>
+                    <div id="w1m" style="font-size: 0.8em; color:#bdc3c7;">Generado a 1m: -- dB</div>
+                </div>
+                <div class="result-box">
+                    <div style="font-size: 0.8em; text-transform: uppercase;">Subs al fondo</div>
+                    <div class="spl-value val-subs" id="splSubs">-- dB</div>
+                    <div id="sw1m" style="font-size: 0.8em; color:#bdc3c7;">Generado a 1m: -- dB</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <label style="color: #2c3e50; font-size: 1.1em; font-weight: bold; margin-bottom: 10px;">Plano a
+                Escala</label>
+            <canvas id="roomCanvas" width="380" height="500"></canvas>
+        </div>
+
+        <div class="formulas-box" id="formulaDisplay">
+        </div>
+    </div>
+
+    <script>
+        // Función para alternar entre campos de entrada
+        function toggleMode(system) {
+            const mode = document.getElementById(system + 'Mode').value;
+            if (mode === 'sens') {
+                document.getElementById(system + 'SensInputs').style.display = 'flex';
+                document.getElementById(system + 'MaxSplInputs').style.display = 'none';
+            } else {
+                document.getElementById(system + 'SensInputs').style.display = 'none';
+                document.getElementById(system + 'MaxSplInputs').style.display = 'flex';
+            }
+        }
+
+        function calculateAll() {
+            const distance = parseFloat(document.getElementById('roomLength').value) || 1;
+            const width = parseFloat(document.getElementById('roomWidth').value) || 1;
+            const distanceLoss = 20 * Math.log10(distance);
+
+            // Objetivo
+            const targetSPL = parseFloat(document.getElementById('targetSPL').value) || 0;
+            const required1m = targetSPL + distanceLoss;
+            document.getElementById('reqSPL1m').innerText = required1m.toFixed(1) + ' dB';
+
+            // Función unificada de sistema
+            function calcSystem(prefix) {
+                const count = parseFloat(document.getElementById(prefix + 'Count').value) || 0;
+                if (count <= 0) return { spl1m: 0, splFinal: 0 };
+
+                const mode = document.getElementById(prefix + 'Mode').value;
+                let baseSpl1m = 0;
+
+                if (mode === 'sens') {
+                    const sens = parseFloat(document.getElementById(prefix + 'Sens').value) || 0;
+                    const power = parseFloat(document.getElementById(prefix + 'Power').value) || 0;
+                    const pwrGain = 10 * Math.log10(power);
+                    baseSpl1m = sens + pwrGain;
+                } else {
+                    baseSpl1m = parseFloat(document.getElementById(prefix + 'MaxSPL').value) || 0;
+                }
+
+                const numGain = 10 * Math.log10(count);
+                const spl1m = baseSpl1m + numGain;
+                const splFinal = spl1m - distanceLoss;
+                return { spl1m, splFinal };
+            }
+
+            // Ejecutar cálculos
+            const wRes = calcSystem('w');
+            const swRes = calcSystem('sw');
+            const wCount = parseFloat(document.getElementById('wCount').value) || 0;
+            const swCount = parseFloat(document.getElementById('swCount').value) || 0;
+
+            // Actualizar UI - Resultados
+            document.getElementById('splWoofers').innerText = wCount > 0 ? wRes.splFinal.toFixed(1) + ' dB' : 'N/A';
+            document.getElementById('w1m').innerText = wCount > 0 ? `Total a 1m: ${wRes.spl1m.toFixed(1)} dB` : '';
+
+            document.getElementById('splSubs').innerText = swCount > 0 ? swRes.splFinal.toFixed(1) + ' dB' : 'N/A';
+            document.getElementById('sw1m').innerText = swCount > 0 ? `Total a 1m: ${swRes.spl1m.toFixed(1)} dB` : '';
+
+            // Dibujar y Fórmulas
+            drawRoom(width, distance, wCount, swCount);
+            updateFormulasText(distance, distanceLoss, targetSPL, required1m);
+        }
+
+        function updateFormulasText(dist, loss, target, req) {
+            const box = document.getElementById('formulaDisplay');
+            box.innerHTML = `
+            <div class="formula-title">📖 Fórmulas Acústicas (Valores Actuales):</div>
+            <div><strong>Pérdida por distancia:</strong> 20 * log10(${dist}m) = <strong>-${loss.toFixed(1)} dB</strong></div>
+            <div style="color: #16a085;"><strong>SPL Requerido @ 1m:</strong> ${target} dB (Objetivo) + ${loss.toFixed(1)} dB (Pérdida) = <strong>${req.toFixed(1)} dB</strong></div>
+            <hr style="border:0; border-top:1px dashed #ccc; margin: 10px 0;">
+            <div><strong>Lógica de Ganancia de Altavoces:</strong></div>
+            <div>Si usas "Sensibilidad": <em>SPL Base = Sensibilidad + 10 * log10(Watts)</em></div>
+            <div>Si usas "Max SPL": <em>SPL Base = Dato del fabricante</em></div>
+            <div><strong>SPL Generado @ 1m:</strong> SPL Base + (10 * log10(Nº Cajas))</div>
+            <div><strong>SPL Final al Fondo:</strong> SPL Generado @ 1m - Pérdida por distancia</div>
+        `;
+        }
+
+        function drawRoom(roomWidth, roomLength, wCount, swCount) {
+            const canvas = document.getElementById('roomCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const padding = 50;
+            const maxCanvasW = canvas.width - (padding * 2);
+            const maxCanvasH = canvas.height - (padding * 2);
+
+            const scaleX = maxCanvasW / roomWidth;
+            const scaleY = maxCanvasH / roomLength;
+            const scale = Math.min(scaleX, scaleY);
+
+            const rectW = roomWidth * scale;
+            const rectH = roomLength * scale;
+
+            const startX = (canvas.width - rectW) / 2;
+            const startY = (canvas.height - rectH) / 2;
+
+            const gradient = ctx.createLinearGradient(0, startY, 0, startY + rectH);
+            gradient.addColorStop(0, "rgba(241, 196, 15, 0.4)");
+            gradient.addColorStop(1, "rgba(52, 152, 219, 0.2)");
+            ctx.fillStyle = gradient;
+            ctx.fillRect(startX, startY, rectW, rectH);
+
+            ctx.strokeStyle = "#7f8c8d";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(startX, startY, rectW, rectH);
+
+            function drawSpeakers(count, yOffset, color, size, label) {
+                if (count <= 0) return;
+                ctx.fillStyle = color;
+                const spacing = rectW / (count + 1);
+                for (let i = 1; i <= count; i++) {
+                    const xPos = startX + (spacing * i) - (size / 2);
+                    ctx.fillRect(xPos, startY + yOffset, size, size);
+                }
+                ctx.fillStyle = color;
+                ctx.font = "11px Arial";
+                ctx.fillText(label, startX + rectW + 10, startY + yOffset + size);
+            }
+
+            drawSpeakers(wCount, 5, "#34495e", 12, "Woofers");
+            drawSpeakers(swCount, 25, "#e74c3c", 16, "Subs");
+
+            ctx.fillStyle = "#333";
+            ctx.font = "13px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(roomWidth + "m", canvas.width / 2, startY - 15);
+            ctx.textAlign = "right";
+            ctx.fillText(roomLength + "m", startX - 10, canvas.height / 2);
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#16a085";
+            ctx.font = "bold 13px Arial";
+            ctx.fillText("Zona Objetivo SPL", canvas.width / 2, startY + rectH + 20);
+        }
+
+        window.onload = function () {
+            toggleMode('w');
+            toggleMode('sw');
+            calculateAll();
+        };
+    </script>
+
+</body>
+
+</html>

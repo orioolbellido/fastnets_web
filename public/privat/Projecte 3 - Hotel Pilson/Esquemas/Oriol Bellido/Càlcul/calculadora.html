@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora ICT Dinámica Pro</title>
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --danger: #dc3545;
+            --dark: #212529;
+            --success: #198754;
+            --border: #ced4da;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #e9ecef;
+            color: var(--dark);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            height: 95vh;
+        }
+
+        .panel-izq {
+            width: 550px;
+            background: var(--bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            background: var(--dark);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .global-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .tap-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
+            border-left: 5px solid var(--primary);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        input[type="text"] {
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            color: white;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: #0b5ed7;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            width: auto;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            position: absolute;
+            top: 12px;
+            right: 15px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: auto;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        canvas {
+            background: white;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px dashed #adb5bd;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="panel-izq">
+        <div class="header">🎛️ Diseñador ICT Dinámico</div>
+        <div class="scroll-area" id="controls">
+        </div>
+        <div style="padding: 15px; background: white; border-top: 1px solid var(--border);">
+            <button class="btn btn-primary" onclick="addTap()">+ Añadir Derivador a la Cascada</button>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="esquemaCanvas"></canvas>
+    </div>
+
+    <script>
+        // ESTADO BASE
+        let state = {
+            global: {
+                headendName: "Centralita Hotel Pilson", targetSignal: 60, headendDist: 4.5,
+                projectTitle: "Esquema ICT2 - Distribución TV", draftsman: "Ingeniería", date: new Date().toLocaleDateString('es-ES')
+            },
+            taps: [
+                { id: 1, name: "<-- Hab 5 + Hab 6 --> DER TS-2-12", cableName: "Televes 414002", cableAtt: 0.32, trunkLen: 1, tapDer: 12, tapPass: 1, socketName: "BSD201S", socketAtt: 1, branchLen: 1.5, leftSockets: 1, rightSockets: 1, hasLoad: false },
+                { id: 2, name: "<-- Hab 3 + Hab 4 --> DER TS-2-10", cableName: "Televes 414002", cableAtt: 0.32, trunkLen: 1, tapDer: 10, tapPass: 1, socketName: "BSD201S", socketAtt: 1, branchLen: 1.5, leftSockets: 1, rightSockets: 1, hasLoad: false },
+                { id: 3, name: "<-- Hab 1 + Hab 2 --> DER TS-2-10", cableName: "Televes 414002", cableAtt: 0.32, trunkLen: 1, tapDer: 10, tapPass: 1, socketName: "BSD201S", socketAtt: 1, branchLen: 1.5, leftSockets: 1, rightSockets: 1, hasLoad: true }
+            ]
+        };
+
+        function generateId() { return Math.floor(Math.random() * 1000000); }
+
+        function addTap() {
+            if (state.taps.length > 0) state.taps[state.taps.length - 1].hasLoad = false;
+            state.taps.push({
+                id: generateId(), name: "Nueva Planta", cableName: "Televes 414002", cableAtt: 0.32, trunkLen: 1,
+                tapDer: 10, tapPass: 1, socketName: "BSD201S", socketAtt: 1, branchLen: 1.5,
+                leftSockets: 1, rightSockets: 1, hasLoad: true
+            });
+            buildUI();
+        }
+
+        function removeTap(id) {
+            state.taps = state.taps.filter(t => t.id !== id);
+            buildUI();
+        }
+
+        function updateGlobal(field, value) {
+            if (['headendName', 'projectTitle', 'draftsman', 'date'].includes(field)) {
+                state.global[field] = value;
+            } else {
+                let val = parseFloat(value);
+                state.global[field] = isNaN(val) ? 0 : val;
+            }
+            calcAndDraw();
+        }
+
+        function updateTap(id, field, value) {
+            const tap = state.taps.find(t => t.id === id);
+            if (tap) {
+                if (field === 'hasLoad') tap[field] = value;
+                else if (['name', 'cableName', 'socketName'].includes(field)) tap[field] = value;
+                else {
+                    let val = parseFloat(value);
+                    tap[field] = isNaN(val) ? 0 : val;
+                }
+                calcAndDraw();
+            }
+        }
+
+        function exportPNG() {
+            const canvas = document.getElementById('esquemaCanvas');
+            const link = document.createElement('a');
+            link.download = `${state.global.projectTitle.replace(/\s+/g, '_')}_Esquema.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function buildUI() {
+            const container = document.getElementById('controls');
+            let html = `
+            <div class="global-card" style="margin-bottom: 15px;">
+                <div class="section-title">Datos del Proyecto (Cajetín)</div>
+                <div class="control-group" style="margin-bottom: 10px;"><label>Título del Proyecto</label><input type="text" value="${state.global.projectTitle}" oninput="updateGlobal('projectTitle', this.value)"></div>
+                <div class="grid-2">
+                    <div class="control-group"><label>Dibujante</label><input type="text" value="${state.global.draftsman}" oninput="updateGlobal('draftsman', this.value)"></div>
+                    <div class="control-group"><label>Fecha</label><input type="text" value="${state.global.date}" oninput="updateGlobal('date', this.value)"></div>
+                </div>
+                <button class="btn" style="margin-top: 15px; background: var(--success);" onclick="exportPNG()">💾 Exportar Esquema a PNG</button>
+            </div>
+
+            <div class="global-card">
+                <div class="section-title">Parámetros Globales</div>
+                <div class="control-group" style="margin-bottom: 12px;"><label>Nombre Cabecera</label><input type="text" value="${state.global.headendName}" oninput="updateGlobal('headendName', this.value)"></div>
+                <div class="grid-2">
+                    <div class="control-group"><label>Objetivo Peor Toma (dBµV)</label><input type="number" step="0.5" value="${state.global.targetSignal}" oninput="updateGlobal('targetSignal', this.value)"></div>
+                    <div class="control-group" style="background:#e9ecef; padding:6px; border-radius:4px;"><label>Dist. Cabecera -> 1º Deriv. (m)</label><input type="number" step="0.5" value="${state.global.headendDist}" oninput="updateGlobal('headendDist', this.value)"></div>
+                </div>
+            </div>
+            <div class="section-title" style="margin-top: 15px;">Cascada de Distribución</div>
+        `;
+
+            state.taps.forEach((tap, index) => {
+                let distLabel = index === 0 ? "Ignorado (Usa Dist. Cabecera)" : "Dist. al Derivador previo (m)";
+                let distDisabled = index === 0 ? "disabled style='background:#e9ecef; color:#adb5bd;'" : "";
+
+                html += `
+            <div class="tap-card">
+                <button class="btn-danger" onclick="removeTap(${tap.id})">Borrar</button>
+                <div class="control-group" style="width: 70%; margin-bottom: 15px;"><label>📍 Identificador de Planta / Zona</label><input type="text" value="${tap.name}" oninput="updateTap(${tap.id}, 'name', this.value)"></div>
+                
+                <div class="grid-3" style="background:#f8f9fa; padding:8px; border-radius:6px; border:1px solid #dee2e6;">
+                    <div class="control-group"><label>Cable Troncal</label><input type="text" value="${tap.cableName}" oninput="updateTap(${tap.id}, 'cableName', this.value)"></div>
+                    <div class="control-group"><label>${distLabel}</label><input type="number" step="0.5" value="${tap.trunkLen}" ${distDisabled} oninput="updateTap(${tap.id}, 'trunkLen', this.value)"></div>
+                    <div class="control-group"><label>Aten. (dB/m)</label><input type="number" step="0.01" value="${tap.cableAtt}" oninput="updateTap(${tap.id}, 'cableAtt', this.value)"></div>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="control-group"><label>Derivador: Aten. Derivación</label><input type="number" step="0.5" value="${tap.tapDer}" oninput="updateTap(${tap.id}, 'tapDer', this.value)"></div>
+                    <div class="control-group"><label>Derivador: Aten. Paso</label><input type="number" step="0.5" value="${tap.tapPass}" oninput="updateTap(${tap.id}, 'tapPass', this.value)"></div>
+                </div>
+
+                <div class="grid-3" style="background:#e9ecef; padding:8px; border-radius:6px;">
+                    <div class="control-group"><label>Presa Modelo</label><input type="text" value="${tap.socketName}" oninput="updateTap(${tap.id}, 'socketName', this.value)"></div>
+                    <div class="control-group"><label>Long. Hab. (m)</label><input type="number" step="0.5" value="${tap.branchLen}" oninput="updateTap(${tap.id}, 'branchLen', this.value)"></div>
+                    <div class="control-group"><label>Aten. Presa (dB)</label><input type="number" step="0.5" value="${tap.socketAtt}" oninput="updateTap(${tap.id}, 'socketAtt', this.value)"></div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 10px;">
+                    <div class="control-group"><label>Habitaciones Izquierda</label><input type="number" min="0" value="${tap.leftSockets}" oninput="updateTap(${tap.id}, 'leftSockets', this.value)"></div>
+                    <div class="control-group"><label>Habitaciones Derecha</label><input type="number" min="0" value="${tap.rightSockets}" oninput="updateTap(${tap.id}, 'rightSockets', this.value)"></div>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="load_${tap.id}" ${tap.hasLoad ? 'checked' : ''} onchange="updateTap(${tap.id}, 'hasLoad', this.checked)">
+                    <label for="load_${tap.id}" style="cursor:pointer; color: ${tap.hasLoad ? 'var(--danger)' : 'var(--dark)'};">Finalizar Línea con Carga 75Ω</label>
+                </div>
+            </div>`;
+            });
+            container.innerHTML = html;
+            calcAndDraw();
+        }
+
+        function calcAndDraw() {
+            let simSignal = 0;
+            let minSocketSignal = Infinity;
+            let networkData = [];
+
+            // PASO 1: Encontrar pérdida máxima
+            state.taps.forEach((tap, index) => {
+                let dist = index === 0 ? state.global.headendDist : tap.trunkLen;
+                let inTroncal = simSignal - (dist * tap.cableAtt);
+                let outDeriv = inTroncal - tap.tapDer;
+                let prePresa = outDeriv - (tap.branchLen * tap.cableAtt);
+                let socketSignal = prePresa - tap.socketAtt;
+                let outTroncal = inTroncal - tap.tapPass;
+
+                if ((tap.leftSockets > 0 || tap.rightSockets > 0) && socketSignal < minSocketSignal) {
+                    minSocketSignal = socketSignal;
+                }
+                simSignal = outTroncal;
+            });
+
+            if (minSocketSignal === Infinity) minSocketSignal = 0;
+
+            // PASO 2: Inyección Cabecera
+            const reqHeadend = state.global.targetSignal - minSocketSignal;
+            let realSignal = reqHeadend;
+
+            // PASO 3: Calcular todo
+            state.taps.forEach((tap, index) => {
+                let dist = index === 0 ? state.global.headendDist : tap.trunkLen;
+                let cableTroncalLoss = dist * tap.cableAtt;
+                let cableRamaLoss = tap.branchLen * tap.cableAtt;
+
+                let inTroncal = realSignal - cableTroncalLoss;
+                let outDeriv = inTroncal - tap.tapDer;
+                let prePresa = outDeriv - cableRamaLoss;
+                let socketSignal = prePresa - tap.socketAtt;
+                let outTroncal = inTroncal - tap.tapPass;
+
+                networkData.push({ ...tap, inTroncal, outDeriv, prePresa, socketSignal, outTroncal, usedDist: dist });
+                realSignal = outTroncal;
+            });
+
+            // PASO 4: CANVAS
+            const canvas = document.getElementById('esquemaCanvas');
+            const ctx = canvas.getContext('2d');
+
+            let requiredHeight = 250;
+            networkData.forEach(tap => {
+                let maxSockets = Math.max(tap.leftSockets, tap.rightSockets);
+                requiredHeight += 120 + (maxSockets * 40);
+            });
+
+            // Se añade un buffer de 120px para asegurar que el cajetín cabe bien abajo
+            canvas.height = Math.max(800, requiredHeight) + 120;
+            canvas.width = 1100;
+
+            // Pintamos un fondo blanco sólido para que el PNG exportado no sea transparente
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const cx = 550;
+            const tapW = 46;
+            ctx.lineWidth = 2;
+
+            // ---------------- DIBUJAR CABECERA ----------------
+            let prevY = 100;
+
+            // Caja Cabecera
+            ctx.fillStyle = "#212529"; ctx.fillRect(cx - 110, 20, 220, 80);
+            ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+            ctx.font = "bold 13px Arial"; ctx.fillText(state.global.headendName.toUpperCase(), cx, 42);
+
+            // SALIDA CLARA Y GRANDE
+            ctx.fillStyle = "#ffc107"; ctx.font = "bold 18px Arial";
+            ctx.fillText(`SALIDA: ${reqHeadend.toFixed(2)} dBµV`, cx, 75);
+
+            // ---------------- DIBUJAR DERIVADORES ----------------
+            networkData.forEach((tap) => {
+                let maxSockets = Math.max(tap.leftSockets, tap.rightSockets);
+                let tapH = Math.max(40, maxSockets * 40); // Altura de caja adaptativa
+                let boxTop = prevY + 110;
+
+                // TRONCAL (Línea)
+                ctx.strokeStyle = "#495057"; ctx.beginPath(); ctx.moveTo(cx, prevY); ctx.lineTo(cx, boxTop); ctx.stroke();
+
+                // TRONCAL (Texto Cable)
+                let midY = prevY + ((boxTop - prevY) / 2);
+                ctx.fillStyle = "#6c757d"; ctx.textAlign = "left"; ctx.font = "11px Arial";
+                ctx.fillText(`↓ ${tap.cableName} (${tap.usedDist}m)`, cx + 8, midY);
+
+                // Textos ANTES de la caja para evitar solapamientos
+                // Nombre de la planta (Arriba Izquierda)
+                ctx.fillStyle = "var(--primary)"; ctx.textAlign = "right"; ctx.font = "bold 14px Arial";
+                ctx.fillText(tap.name, cx - tapW / 2 - 10, boxTop - 8);
+
+                // Entrada (Arriba Derecha)
+                ctx.fillStyle = "#000"; ctx.font = "bold 13px monospace"; ctx.textAlign = "left";
+                ctx.fillText(`In: ${tap.inTroncal.toFixed(2)}`, cx + tapW / 2 + 10, boxTop - 8);
+
+                // CAJA DERIVADOR
+                ctx.fillStyle = "#fff"; ctx.fillRect(cx - tapW / 2, boxTop, tapW, tapH);
+                ctx.strokeRect(cx - tapW / 2, boxTop, tapW, tapH);
+
+                // Salida Derivada (Dentro de la caja, siempre visible)
+                ctx.fillStyle = "#000"; ctx.textAlign = "center"; ctx.font = "12px monospace";
+                ctx.fillText(`Der`, cx, boxTop + 18);
+                ctx.fillText(`${tap.outDeriv.toFixed(2)}`, cx, boxTop + 32);
+
+                // RAMAS Y TOMAS
+                const drawBranch = (side, count) => {
+                    if (count === 0) return;
+                    const dir = side === 'left' ? -1 : 1;
+                    const lineLen = 320;
+
+                    for (let i = 0; i < count; i++) {
+                        let yOffset = boxTop + 20 + (i * 40);
+                        if (count === 1) yOffset = boxTop + (tapH / 2); // Centrar si solo hay 1
+
+                        // Línea horizontal
+                        ctx.strokeStyle = "#495057"; ctx.beginPath(); ctx.moveTo(cx + (tapW / 2 * dir), yOffset); ctx.lineTo(cx + (lineLen * dir), yOffset); ctx.stroke();
+
+                        // Distancia encima de la línea
+                        ctx.fillStyle = "#adb5bd"; ctx.textAlign = "center"; ctx.font = "10px Arial";
+                        ctx.fillText(`${tap.branchLen}m`, cx + ((lineLen / 2) * dir), yOffset - 5);
+
+                        // Círculo de la toma
+                        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(cx + (lineLen * dir), yOffset, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                        // Configuración de textos en la toma
+                        let preX = side === 'left' ? cx - lineLen + 20 : cx + lineLen - 20;
+                        let preAlign = side === 'left' ? 'left' : 'right';
+
+                        let finalX = side === 'left' ? cx - lineLen - 15 : cx + lineLen + 15;
+                        let finalAlign = side === 'left' ? 'right' : 'left';
+
+                        // Modelo y Pre-Presa (Alineado interior)
+                        ctx.textAlign = preAlign; ctx.fillStyle = "#495057"; ctx.font = "11px Arial";
+                        ctx.fillText(`${tap.socketName}`, preX, yOffset - 18);
+                        ctx.fillText(`Pre: ${tap.prePresa.toFixed(2)}`, preX, yOffset - 4);
+
+                        // Señal Final Útil (Alineado exterior, grande)
+                        ctx.fillStyle = "var(--success)"; ctx.font = "bold 15px Arial"; ctx.textAlign = finalAlign;
+                        ctx.fillText(`${tap.socketSignal.toFixed(2)} dBµV`, finalX, yOffset + 5);
+                    }
+                };
+
+                drawBranch('left', tap.leftSockets);
+                drawBranch('right', tap.rightSockets);
+
+                let boxBottom = boxTop + tapH;
+
+                // CONTINUACIÓN O CARGA DE 75 OHMIOS
+                if (tap.hasLoad) {
+                    ctx.strokeStyle = "#495057"; ctx.beginPath(); ctx.moveTo(cx, boxBottom); ctx.lineTo(cx, boxBottom + 35); ctx.stroke();
+                    ctx.fillStyle = "var(--danger)"; ctx.fillRect(cx - 25, boxBottom + 35, 50, 14);
+
+                    ctx.fillStyle = "#000"; ctx.textAlign = "left"; ctx.font = "bold 13px monospace";
+                    ctx.fillText(`In: ${tap.outTroncal.toFixed(2)}`, cx + 35, boxBottom + 30);
+                    ctx.fillStyle = "var(--danger)"; ctx.font = "bold 13px Arial";
+                    ctx.fillText("75Ω FIN", cx + 35, boxBottom + 46);
+                } else {
+                    ctx.fillStyle = "#000"; ctx.textAlign = "left"; ctx.font = "bold 13px monospace";
+                    ctx.fillText(`Pas: ${tap.outTroncal.toFixed(2)}`, cx + tapW / 2 + 10, boxBottom + 15);
+                    prevY = boxBottom;
+                }
+            });
+
+            // ---------------- DIBUJAR CAJETÍN ----------------
+            const cW = 350;
+            const cH = 80;
+            const cX = canvas.width - cW - 20; // Esquina inferior derecha
+            const cY = canvas.height - cH - 20;
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#212529";
+            ctx.fillStyle = "#f8f9fa";
+            ctx.fillRect(cX, cY, cW, cH);
+            ctx.strokeRect(cX, cY, cW, cH);
+
+            // Líneas divisorias del cajetín
+            ctx.beginPath();
+            ctx.moveTo(cX, cY + 40); ctx.lineTo(cX + cW, cY + 40);
+            ctx.moveTo(cX + cW / 2, cY + 40); ctx.lineTo(cX + cW / 2, cY + cH);
+            ctx.stroke();
+
+            // Textos del cajetín
+            ctx.fillStyle = "#000"; ctx.textAlign = "center";
+
+            ctx.font = "bold 16px Arial";
+            ctx.fillText(state.global.projectTitle.toUpperCase(), cX + cW / 2, cY + 26);
+
+            ctx.fillStyle = "#6c757d"; ctx.font = "10px Arial";
+            ctx.fillText("DIBUJANTE", cX + cW / 4, cY + 54);
+            ctx.fillText("FECHA", cX + (cW * 0.75), cY + 54);
+
+            ctx.fillStyle = "#000"; ctx.font = "bold 14px Arial";
+            ctx.fillText(state.global.draftsman, cX + cW / 4, cY + 70);
+            ctx.fillText(state.global.date, cX + (cW * 0.75), cY + 70);
+        }
+
+        window.onload = buildUI;
+    </script>
+</body>
+
+</html>
